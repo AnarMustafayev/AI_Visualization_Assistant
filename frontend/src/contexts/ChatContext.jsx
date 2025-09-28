@@ -26,7 +26,6 @@ export const ChatProvider = ({ children }) => {
     createChat,
     deleteChat: deleteChatFromDB,
     updateChatTitle,
-    createChatWithMessage,
     processAndSaveQuery,
     clearError
   } = useChatPersistence();
@@ -53,16 +52,15 @@ export const ChatProvider = ({ children }) => {
       const loadedChats = await loadChats();
       setChats(loadedChats);
     } catch (err) {
-      setError(err.message || 'Chatlər yüklənərkən xəta baş verdi');
+      setError(err.message || 'Chatlar yüklənərkən xəta baş verdi');
     } finally {
       setLoading(false);
     }
   }, [loadChats]);
 
-  // Create new chat
+  // Create new chat (only when actually needed)
   const handleCreateChat = useCallback(async (title = null) => {
     try {
-      setLoading(true);
       const newChat = await createChat(title);
       
       // Add to local state
@@ -79,27 +77,48 @@ export const ChatProvider = ({ children }) => {
     } catch (err) {
       setError(err.message || 'Yeni chat yaradıla bilmədi');
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, [createChat]);
 
-  // Select and load chat detail
+  // Select and load chat detail with complete state isolation
   const handleSelectChat = useCallback(async (chat) => {
     if (activeChat?.chat_id === chat.chat_id) return;
 
     try {
       setLoading(true);
-      setActiveChat(chat);
       
+      // COMPLETE state reset - ensure no contamination
+      console.log('🔄 Switching to chat:', chat.chat_id, 'from:', activeChat?.chat_id);
+      setActiveChat(null);
+      setActiveChatDetail(null);
+      
+      // Longer delay to ensure React state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Now set the new chat and load its data
+      console.log('📋 Loading chat detail for:', chat.chat_id);
+      setActiveChat(chat);
       const chatDetail = await loadChatDetail(chat.chat_id);
+      
+      // Validate that the loaded chat detail matches the requested chat
+      if (chatDetail.chat_id !== chat.chat_id) {
+        console.error('❌ Chat detail mismatch! Requested:', chat.chat_id, 'Got:', chatDetail.chat_id);
+        throw new Error('Chat məlumatları uyğun gəlmir');
+      }
+      
+      console.log('✅ Chat detail loaded successfully for:', chatDetail.chat_id, 'Messages:', chatDetail.messages?.length);
       setActiveChatDetail(chatDetail);
+      
     } catch (err) {
+      console.error('❌ Error loading chat:', err);
       setError(err.message || 'Chat məlumatları yüklənərkən xəta baş verdi');
+      // Reset states on error
+      setActiveChat(null);
+      setActiveChatDetail(null);
     } finally {
       setLoading(false);
     }
-  }, [activeChat, loadChatDetail]);
+  }, [loadChatDetail]);
 
   // Delete chat
   const handleDeleteChat = useCallback(async (chatId) => {
@@ -149,81 +168,59 @@ export const ChatProvider = ({ children }) => {
     }
   }, [activeChat, activeChatDetail, updateChatTitle]);
 
-  // Process query with automatic chat management
-  const handleProcessQuery = useCallback(async (query, results = null) => {
+  // Process query with smart chat management - new chat only when needed
+  const handleProcessQuery = useCallback(async (query) => {
     try {
       setLoading(true);
       
-      // If no active chat, create a new one
+      let chatToUse = activeChat;
+      let isNewChat = false;
+      
+      // Only create a new chat if there's no active chat
       if (!activeChat) {
-        const newChat = await handleCreateChat();
-        
-        // Process query and save to new chat
-        const processedResults = await processAndSaveQuery(query, newChat.chat_id);
-        
-        // Reload chat detail to get the saved message
-        const updatedChatDetail = await loadChatDetail(newChat.chat_id);
-        setActiveChatDetail(updatedChatDetail);
-        
-        // Update chat list (move to top and update message count)
-        await loadAllChats();
-        
-        return processedResults;
-      } else {
-        // Process query and save to existing active chat
-        const processedResults = await processAndSaveQuery(query, activeChat.chat_id);
-        
-        // Reload active chat detail to get the new message
-        const updatedChatDetail = await loadChatDetail(activeChat.chat_id);
-        setActiveChatDetail(updatedChatDetail);
-        
-        // Update chat list (move to top and update message count)
-        await loadAllChats();
-        
-        return processedResults;
+        chatToUse = await handleCreateChat("Sorğu işlənir...");
+        isNewChat = true;
       }
+      
+      // Process query and save to the chat (existing or new)
+      const processedResults = await processAndSaveQuery(query, chatToUse.chat_id);
+      
+      // If this is a new chat and we got a title from AI, update it
+      if (isNewChat && processedResults.chat_title) {
+        try {
+          await handleUpdateChatTitle(chatToUse.chat_id, processedResults.chat_title);
+        } catch (titleError) {
+          console.warn('Failed to update chat title:', titleError);
+        }
+      }
+      
+      // Reload active chat detail to get the new message
+      const updatedChatDetail = await loadChatDetail(chatToUse.chat_id);
+      setActiveChatDetail(updatedChatDetail);
+      
+      // Update chat list (move to top and update message count)
+      await loadAllChats();
+      
+      return processedResults;
+      
     } catch (err) {
+      // If processing failed and this was a new chat, clean up
+      if (activeChat?.chat_id && activeChat.title === "Sorğu işlənir...") {
+        try {
+          await handleDeleteChat(activeChat.chat_id);
+        } catch (cleanupError) {
+          console.error('Failed to cleanup empty chat:', cleanupError);
+        }
+      }
+      
       setError(err.message || 'Sorğu işlənərkən xəta baş verdi');
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [activeChat, handleCreateChat, processAndSaveQuery, loadChatDetail, loadAllChats]);
+  }, [activeChat, handleCreateChat, processAndSaveQuery, loadChatDetail, loadAllChats, handleUpdateChatTitle, handleDeleteChat]);
 
-  // Create chat with first message (for when user submits without selecting a chat)
-  const handleCreateChatWithMessage = useCallback(async (messageText, generatedSql, visualizationData) => {
-    try {
-      setLoading(true);
-      
-      const { chat, message } = await createChatWithMessage(
-        messageText,
-        generatedSql,
-        visualizationData
-      );
-      
-      // Add to local state
-      setChats(prevChats => [chat, ...prevChats]);
-      
-      // Set as active chat with the message
-      setActiveChat(chat);
-      setActiveChatDetail({
-        ...chat,
-        messages: [message]
-      });
-      
-      // Reload chat list to get updated information
-      await loadAllChats();
-      
-      return { chat, message };
-    } catch (err) {
-      setError(err.message || 'Chat və mesaj yaradıla bilmədi');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [createChatWithMessage, loadAllChats]);
-
-  // Clear active chat (start fresh)
+  // Clear active chat (start fresh) - WITHOUT creating a new chat in DB
   const handleClearActiveChat = useCallback(() => {
     setActiveChat(null);
     setActiveChatDetail(null);
@@ -234,14 +231,6 @@ export const ChatProvider = ({ children }) => {
     setError(null);
     clearError();
   }, [clearError]);
-
-  // Get the last message from active chat (for display purposes)
-  const getLastMessage = useCallback(() => {
-    if (!activeChatDetail?.messages || activeChatDetail.messages.length === 0) {
-      return null;
-    }
-    return activeChatDetail.messages[activeChatDetail.messages.length - 1];
-  }, [activeChatDetail]);
 
   // Check if there are any messages in active chat
   const hasMessages = useCallback(() => {
@@ -265,12 +254,10 @@ export const ChatProvider = ({ children }) => {
     
     // Message/Query processing
     processQuery: handleProcessQuery,
-    createChatWithMessage: handleCreateChatWithMessage,
     
     // Utility functions
     refreshChats: loadAllChats,
     clearError: handleClearError,
-    getLastMessage,
     hasMessages,
   };
 

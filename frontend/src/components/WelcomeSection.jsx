@@ -10,11 +10,8 @@ const WelcomeSection = ({ quickPrompts, onPromptClick }) => {
           <Sparkles className="h-10 w-10 text-white" />
         </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          AI-powered SQL Analytics
+          Salam! Vizualizasiya Assistentinə xoş gəlmisiniz
         </h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Məlumat bazanızı təbii dillə sorğulayın və ağıllı vizualizasiya ilə nəticələri analiz edin
-        </p>
       </div>
 
       {/* Quick Prompts */}

@@ -3,15 +3,18 @@ import psycopg2.extras
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import json
-from app.db.database import get_db_connection
+import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path='.env')
 
 
 DB_CONFIG = {
-    'host': 'localhost',  # or your PostgreSQL server host
-    'port': '5432',       # default PostgreSQL port
-    'database': 'chat_history',
-    'user': 'postgres',
-    'password': '**'
+    'host': os.getenv('DB_HOST'),
+    'port': os.getenv('DB_PORT'),
+    'database': os.getenv('DB_DATABASE_chat'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD')
 }
 
 
@@ -29,8 +32,6 @@ def get_db_connection():
     except Exception as e:
         print(f"Database connection error: {e}")
         return None
-
-
 
 class ChatDatabaseManager:
     """Chat verilənlər bazası əməliyyatlarını idarə edir."""
@@ -300,6 +301,67 @@ class ChatDatabaseManager:
             title = "Yeni Chat"
             
         return title
+
+    def delete_empty_chats(self):
+        """Boş chat-ləri silir (mesajı olmayan)."""
+        try:
+            conn = get_db_connection()
+            if not conn:
+                return False
+            
+            cursor = conn.cursor()
+            
+            # Mesajı olmayan chat-ləri tap və sil
+            cursor.execute("""
+                DELETE FROM chats 
+                WHERE chat_id NOT IN (
+                    SELECT DISTINCT chat_id FROM chat_messages
+                )
+            """)
+            
+            deleted_count = cursor.rowcount
+            conn.commit()
+            conn.close()
+            
+            print(f"Deleted {deleted_count} empty chats")
+            return deleted_count > 0
+            
+        except Exception as e:
+            print(f"Empty chat cleanup error: {e}")
+            if conn:
+                conn.close()
+            return False
+
+    def cleanup_failed_chats(self):
+        """Temporary titles ilə qalan chat-ləri təmizləyir."""
+        try:
+            conn = get_db_connection()
+            if not conn:
+                return False
+            
+            cursor = conn.cursor()
+            
+            # "Sorğu işlənir..." və ya "Yeni sorğu..." başlıqlı boş chatləri sil
+            cursor.execute("""
+                DELETE FROM chats 
+                WHERE (title LIKE '%işlənir%' OR title LIKE 'Yeni sorğu%')
+                AND chat_id NOT IN (
+                    SELECT DISTINCT chat_id FROM chat_messages
+                )
+            """)
+            
+            deleted_count = cursor.rowcount
+            conn.commit()
+            conn.close()
+            
+            print(f"Cleaned up {deleted_count} failed chats")
+            return deleted_count > 0
+            
+        except Exception as e:
+            print(f"Failed chat cleanup error: {e}")
+            if conn:
+                conn.close()
+            return False
 
 # Singleton instance
 chat_db = ChatDatabaseManager()

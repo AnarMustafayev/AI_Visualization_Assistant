@@ -10,23 +10,26 @@ const InputArea = ({
   textareaRef 
 }) => {
   return (
-    <div className="border-t border-gray-200 bg-white p-6 flex-shrink-0">
+    <div className="bg-gradient-to-br from-slate-50 to-slate-100 border-t border-slate-200/30 px-6 py-4">
       <div className="max-w-4xl mx-auto">
-        <div className="relative">
-          <textarea
-            ref={textareaRef}
-            value={prompt}
-            onChange={(e) => onPromptChange(e.target.value)}
-            onKeyDown={onKeyPress}
-            placeholder="Məlumat bazanızı haqqında sual yazın... (məsələn: 'Son ayın satış məlumatlarını göstər')"
-            className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all min-h-[52px] max-h-32"
-            rows={1}
-            disabled={loading}
-          />
+        <div className="flex items-end gap-3">
+          <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/50">
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={(e) => onPromptChange(e.target.value)}
+              onKeyDown={onKeyPress}
+              placeholder="Sualınızı yazın..."
+              className="w-full resize-none bg-transparent px-4 py-3 focus:outline-none placeholder-gray-500 text-gray-800 rounded-2xl min-h-[48px] max-h-32"
+              rows={1}
+              disabled={loading}
+            />
+          </div>
           <button
             onClick={onSubmit}
             disabled={!prompt.trim() || loading}
-            className="absolute right-2 top-2 p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+            className="p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl transition-colors shadow-sm"
+            aria-label={loading ? "İşlənir..." : "Mesaj göndər"}
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -34,16 +37,6 @@ const InputArea = ({
               <Send className="h-5 w-5" />
             )}
           </button>
-        </div>
-        
-        <div className="flex items-center justify-between mt-3">
-          <p className="text-xs text-gray-500">
-            Enter ilə göndər, Shift+Enter ilə yeni sətir
-          </p>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            Hazır
-          </div>
         </div>
       </div>
     </div>

@@ -3,14 +3,19 @@ import pandas as pd
 import os
 from sqlalchemy import create_engine
 from urllib.parse import quote_plus
+import json
+from dotenv import load_dotenv
 
-# PostgreSQL connection parameters
+load_dotenv(dotenv_path='.env')
+
+
+
 DB_CONFIG = {
-    'host': 'localhost',  # or your PostgreSQL server host
-    'port': '5432',       # default PostgreSQL port
-    'database': 'retail banking',
-    'user': 'postgres',
-    'password': '**'
+    'host': os.getenv('DB_HOST'),
+    'port': os.getenv('DB_PORT'),
+    'database': os.getenv('DB_DATABASE'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD')
 }
 
 
