@@ -2,8 +2,7 @@ import React from 'react';
 import { Send } from 'lucide-react';
 
 const InputArea = ({ 
-  prompt, 
-  onPromptChange, 
+
   onKeyPress, 
   onSubmit, 
   loading, 
@@ -16,8 +15,6 @@ const InputArea = ({
           <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white/50">
             <textarea
               ref={textareaRef}
-              value={prompt}
-              onChange={(e) => onPromptChange(e.target.value)}
               onKeyDown={onKeyPress}
               placeholder="Sualınızı yazın..."
               className="w-full resize-none bg-transparent px-4 py-3 focus:outline-none placeholder-gray-500 text-gray-800 rounded-2xl min-h-[48px] max-h-32"
@@ -27,7 +24,7 @@ const InputArea = ({
           </div>
           <button
             onClick={onSubmit}
-            disabled={!prompt.trim() || loading}
+            disabled={loading}
             className="p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl transition-colors shadow-sm"
             aria-label={loading ? "İşlənir..." : "Mesaj göndər"}
           >

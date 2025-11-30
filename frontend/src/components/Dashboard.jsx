@@ -31,6 +31,7 @@ const Dashboard = () => {
   } = useChat();
 
   // State management
+  console.log("dashboard render");
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -109,12 +110,10 @@ const Dashboard = () => {
 
   // Update results when active chat changes with debug logging and forced clearing
   useEffect(() => {
-    console.log('🔄 Chat changed - activeChat:', activeChat?.chat_id, 'isProcessing:', isProcessingNewQuery, 'chatLoading:', chatLoading);
-    console.log('📊 activeChatDetail chat_id:', activeChatDetail?.chat_id);
+  
     
     // FORCE clear all states when chat IDs don't match
     if (activeChat?.chat_id !== activeChatDetail?.chat_id && activeChatDetail?.chat_id) {
-      console.log('🧹 Clearing states due to chat ID mismatch');
       setResults(null);
       setCurrentQuery('');
       setError(null);
@@ -122,7 +121,6 @@ const Dashboard = () => {
 
     // If no active chat and not processing, clear all states
     if (!activeChat && !isProcessingNewQuery && !loading) {
-      console.log('🚮 Clearing states - no active chat');
       setResults(null);
       setCurrentQuery('');
       setError(null);
@@ -132,13 +130,11 @@ const Dashboard = () => {
 
     // Don't interfere with current processing
     if (isProcessingNewQuery || loading) {
-      console.log('⏳ Skipping update - currently processing');
       return;
     }
 
     // Only show stored results when selecting an existing chat (not processing new ones)
     if (activeChat && activeChatDetail?.messages && !isProcessingNewQuery && !loading) {
-      console.log('📨 Loading results from existing chat messages');
       const lastMessage = activeChatDetail.messages[activeChatDetail.messages.length - 1];
       if (lastMessage && lastMessage.visualizations?.length > 0) {
         const lastViz = lastMessage.visualizations[0];
@@ -152,9 +148,7 @@ const Dashboard = () => {
             statistics: calculateBasicStats(lastViz.data_json)
           };
           setResults(reconstructedResults);
-          console.log('✅ Results reconstructed from chat history');
         } catch (error) {
-          console.error('❌ Error reconstructed results:', error);
           setResults(null);
         }
       } else {
@@ -215,18 +209,14 @@ const Dashboard = () => {
 
   // Process messages with strict validation and debug logging
   const processedMessages = useMemo(() => {
-    console.log('🔍 Processing messages for chat ID:', activeChat?.chat_id);
-    console.log('📝 Raw activeChatDetail:', activeChatDetail?.chat_id);
-    console.log('📨 Raw messages count:', activeChatDetail?.messages?.length);
+
     
     // STRICT: Only show messages if we have a matching chat and chat detail
     if (!activeChat || !activeChatDetail || activeChat.chat_id !== activeChatDetail.chat_id) {
-      console.log('❌ Chat mismatch or missing - returning empty');
       return [];
     }
     
     if (!activeChatDetail.messages || activeChatDetail.messages.length === 0) {
-      console.log('❌ No messages in chat detail');
       return [];
     }
     
@@ -239,7 +229,6 @@ const Dashboard = () => {
       return messageValid;
     });
     
-    console.log('✅ Valid messages after filtering:', validMessages.length);
     
     const processed = validMessages.map(message => {
       if (!message.visualizations || message.visualizations.length === 0) {
@@ -261,7 +250,6 @@ const Dashboard = () => {
       return { ...message, processedVisualizations };
     });
     
-    console.log('🎯 Final processed messages for chat', activeChat.chat_id, ':', processed.length);
     return processed;
   }, [activeChatDetail?.messages, activeChat?.chat_id, activeChatDetail?.chat_id]);
 
@@ -290,9 +278,10 @@ const Dashboard = () => {
 
   // Handle form submission
   const handleSubmit = async () => {
-    if (!prompt.trim()) return;
+    const query=textareaRef.current?.value || '';
+    if (!query.trim()) return;
     
-    const userQuery = prompt.trim();
+    const userQuery = query.trim();
     
     // Validate query
     if (!isValidQuery(userQuery)) {
@@ -309,7 +298,6 @@ const Dashboard = () => {
     setIsProcessingNewQuery(true);
 
     // Clear the prompt immediately after starting submission
-    setPrompt('');
 
     try {
       // Step 1: NLP Analysis
@@ -369,6 +357,7 @@ const Dashboard = () => {
     setPrompt(promptText);
     setTimeout(() => {
       if (textareaRef.current) {
+        textareaRef.current.value = promptText; // <-- Add this
         textareaRef.current.focus();
       }
     }, 0);
@@ -538,8 +527,8 @@ const Dashboard = () => {
       {/* Fixed Input Area - Responsive positioning */}
       <div className="fixed bottom-0 left-0 lg:left-80 right-0 z-10">
         <InputArea
-          prompt={prompt}
-          onPromptChange={setPrompt}
+          // prompt={prompt}
+          // onPromptChange={setPrompt}
           onKeyPress={handleKeyPress}
           onSubmit={handleSubmit}
           loading={loading || chatLoading}

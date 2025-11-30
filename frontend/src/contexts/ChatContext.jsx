@@ -88,7 +88,6 @@ export const ChatProvider = ({ children }) => {
       setLoading(true);
       
       // COMPLETE state reset - ensure no contamination
-      console.log('🔄 Switching to chat:', chat.chat_id, 'from:', activeChat?.chat_id);
       setActiveChat(null);
       setActiveChatDetail(null);
       
@@ -96,7 +95,6 @@ export const ChatProvider = ({ children }) => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Now set the new chat and load its data
-      console.log('📋 Loading chat detail for:', chat.chat_id);
       setActiveChat(chat);
       const chatDetail = await loadChatDetail(chat.chat_id);
       
@@ -106,7 +104,6 @@ export const ChatProvider = ({ children }) => {
         throw new Error('Chat məlumatları uyğun gəlmir');
       }
       
-      console.log('✅ Chat detail loaded successfully for:', chatDetail.chat_id, 'Messages:', chatDetail.messages?.length);
       setActiveChatDetail(chatDetail);
       
     } catch (err) {

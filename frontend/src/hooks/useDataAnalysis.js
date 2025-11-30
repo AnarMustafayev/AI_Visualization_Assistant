@@ -43,10 +43,8 @@ export const useDataAnalysis = () => {
 
   const analyzeAndProcessData = useCallback((apiData) => {
     // Add logging at the very beginning
-    console.log('🔍 Raw apiData received:', apiData);
     
     if (!apiData || !apiData.data) {
-      console.log('❌ No data provided, returning empty result');
       return {
         type: 'empty',
         data: [],
@@ -63,12 +61,9 @@ export const useDataAnalysis = () => {
     const { data, generated_sql, visualization_type, ai_reasoning } = apiData;
     
     // Add logging here, AFTER the empty check
-    console.log('🤖 AI recommended visualization:', visualization_type);
-    console.log('📊 Data length:', data?.length);
-    console.log('📋 Sample data (first item):', data?.[0]);
+
     
     if (!data || data.length === 0) {
-      console.log('❌ Data is empty, returning empty result');
       return {
         type: 'empty',
         data: [],
@@ -87,30 +82,24 @@ export const useDataAnalysis = () => {
     // Use AI recommendation instead of complex logic
     let finalVisualizationType = visualization_type || 'table';
     
-    console.log('✅ Final visualization type (before processing):', finalVisualizationType);
     
     // Log AI decision for debugging
     if (ai_reasoning) {
-      console.log(`🧠 AI Vizualizasiya seçimi: ${finalVisualizationType}`);
-      console.log(`💭 AI səbəbi: ${ai_reasoning}`);
+
     }
 
     // Prepare data based on visualization type
     let chartData = data;
     
-    console.log('🔧 Starting data preparation for type:', finalVisualizationType);
     
     // Basic data preparation for specific chart types
     if (finalVisualizationType === 'pie' || finalVisualizationType === 'bar') {
-      console.log('📊 Preparing data for pie/bar chart');
       const columns = Object.keys(data[0] || {});
-      console.log('📋 Available columns:', columns);
       
       const categoryColumn = columns.find(col => isNaN(parseFloat(data[0][col]))) || columns[0];
       const valueColumn = columns.find(col => !isNaN(parseFloat(data[0][col]))) || columns[1];
       
-      console.log('🏷️ Category column:', categoryColumn);
-      console.log('🔢 Value column:', valueColumn);
+
       
       if (categoryColumn && valueColumn) {
         chartData = data.map(row => ({
@@ -118,16 +107,13 @@ export const useDataAnalysis = () => {
           value: parseFloat(row[valueColumn]) || 0,
           ...row
         }));
-        console.log('✅ Chart data prepared:', chartData.slice(0, 3));
       }
     }
     
     // For timeseries, try to detect date column
     if (finalVisualizationType === 'timeseries') {
-      console.log('📅 Preparing data for timeseries');
       const columns = Object.keys(data[0] || {});
       const dateColumn = columns.find(col => !isNaN(Date.parse(data[0][col]))) || columns[0];
-      console.log('📅 Date column detected:', dateColumn);
       
       chartData = data.map(row => ({
         ...row,
@@ -137,21 +123,17 @@ export const useDataAnalysis = () => {
     
     // For ranking, sort by first numeric column
     if (finalVisualizationType === 'ranking') {
-      console.log('🏆 Preparing data for ranking');
       const columns = Object.keys(data[0] || {});
       const numericColumn = columns.find(col => !isNaN(parseFloat(data[0][col])));
-      console.log('🔢 Numeric column for ranking:', numericColumn);
       
       if (numericColumn) {
         chartData = data
           .sort((a, b) => (parseFloat(b[numericColumn]) || 0) - (parseFloat(a[numericColumn]) || 0))
           .map((row, index) => ({ ...row, rank: index + 1 }));
-        console.log('✅ Ranking data prepared:', chartData.slice(0, 3));
       }
     }
 
     // Calculate basic statistics
-    console.log('📈 Calculating statistics...');
     const statistics = calculateBasicStatistics(data);
 
     const finalResult = {
@@ -168,12 +150,7 @@ export const useDataAnalysis = () => {
       primaryDateColumn: statistics.dateColumns?.[0]
     };
 
-    console.log('🎯 FINAL RESULT:', {
-      type: finalResult.type,
-      visualization_type: finalResult.visualization_type,
-      dataLength: finalResult.data.length,
-      ai_reasoning: finalResult.ai_reasoning
-    });
+
 
     return finalResult;
   }, []);
@@ -255,9 +232,7 @@ export const useDataAnalysis = () => {
     try {
       // Use the new chat context to process query
       if (contextProcessQuery) {
-        console.log('🚀 Processing query via context:', userQuery);
         const response = await contextProcessQuery(userQuery);
-        console.log('📨 Context response received:', response);
         
         // Process the data using the updated analysis logic
         const processedResult = analyzeAndProcessData({
@@ -267,7 +242,6 @@ export const useDataAnalysis = () => {
           ai_reasoning: response.ai_reasoning
         });
         
-        console.log('✅ Final processed result:', processedResult);
         
         // Set the result for your existing Dashboard component
         setResult(processedResult);
@@ -290,7 +264,6 @@ export const useDataAnalysis = () => {
 
   // Legacy functions for backward compatibility
   const clearHistory = () => {
-    console.log('clearHistory called - handled by ChatContext');
   };
 
   // Convert new chat format to legacy format for existing components - with safe checks
@@ -310,7 +283,6 @@ export const useDataAnalysis = () => {
   } : null;
 
   const setActiveChat = (chat) => {
-    console.log('setActiveChat called - handled by ChatContext');
   };
 
   return {

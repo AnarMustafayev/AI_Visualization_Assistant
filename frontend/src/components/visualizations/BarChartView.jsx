@@ -16,7 +16,6 @@ const BarChartView = ({ results }) => {
     );
   }
 
-  console.log('BarChart raw data:', data[0]);
 
   // Auto-detect or use pre-formatted data
   let chartData = data;
@@ -42,11 +41,7 @@ const BarChartView = ({ results }) => {
              (!isNaN(parseFloat(value)) && isFinite(value));
     });
 
-    console.log('BarChart column detection:', {
-      text: textColumns,
-      numeric: numericColumns,
-      allColumns: columns
-    });
+    
 
     // Use detected columns or fall back to first available
     categoryKey = textColumns[0] || columns[0];

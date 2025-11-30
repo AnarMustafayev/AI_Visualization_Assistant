@@ -9,7 +9,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS konfiqurasiyası
+# CORS enviroinment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"], # Frontend URL-i
@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API endpoint-lərini əsas tətbiqə daxil edirik
+# API endpoints
 app.include_router(endpoints.router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 

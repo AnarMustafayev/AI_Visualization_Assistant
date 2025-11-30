@@ -259,7 +259,6 @@ class ChatService {
             }
           };
 
-          console.log('Sending payload to backend:', JSON.stringify(payload, null, 2));
 
           const saveResponse = await fetch(`${API_BASE_URL}/api/chats/${chatId}/messages-with-viz`, {
             method: 'POST',
@@ -275,7 +274,6 @@ class ChatService {
             console.error('Full error details:', JSON.stringify(errorData, null, 2));
             // Don't throw, just log the error
           } else {
-            console.log('Mesaj uğurla saxlandı');
           }
           
         } catch (saveError) {

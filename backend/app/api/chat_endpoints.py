@@ -18,7 +18,7 @@ async def create_chat(request: CreateChatRequest):
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
         
-        # Message count 0 əlavə edirik
+        # Message count 0 
         result['message_count'] = 0
         return result
         
@@ -55,7 +55,7 @@ async def get_chat_detail(chat_id: int):
 async def create_message(chat_id: int, request: CreateMessageRequest):
     """Chat-ə yeni mesaj əlavə edir."""
     try:
-        # Chat-in mövcud olub-olmadığını yoxla
+        # Check if chat exists
         chat = chat_db.get_chat_detail(chat_id)
         if not chat:
             raise HTTPException(status_code=404, detail="Chat tapılmadı")
@@ -80,12 +80,12 @@ async def create_message(chat_id: int, request: CreateMessageRequest):
 async def create_message_with_visualization(chat_id: int, request: CreateMessageWithVisualizationRequest):
     """Chat-ə mesaj və vizualizasiya birlikdə əlavə edir."""
     try:
-        # Chat-in mövcud olub-olmadığını yoxla
+        # Check if chat exists
         chat = chat_db.get_chat_detail(chat_id)
         if not chat:
             raise HTTPException(status_code=404, detail="Chat tapılmadı")
         
-        # Mesajı yarat
+        # Create message first
         message = chat_db.create_message(
             chat_id=chat_id,
             message_text=request.message_text,
@@ -95,7 +95,7 @@ async def create_message_with_visualization(chat_id: int, request: CreateMessage
         if not message:
             raise HTTPException(status_code=500, detail="Mesaj yaradıla bilmədi")
         
-        # Əgər vizualizasiya varsa, onu da əlavə et
+        # Then create visualization if provided
         if request.visualization:
             visualization = chat_db.create_visualization(
                 message_id=message['message_id'],
@@ -161,7 +161,7 @@ async def auto_update_chat_title(chat_id: int):
         if not chat['messages']:
             raise HTTPException(status_code=400, detail="Chat-də mesaj yoxdur")
         
-        # İlk mesajdan başlıq yarat
+        # Get first message text to generate title
         first_message = chat['messages'][0]['message_text']
         new_title = chat_db.generate_title_from_message(first_message)
         

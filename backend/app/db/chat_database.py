@@ -48,7 +48,7 @@ class ChatDatabaseManager:
             
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Əgər başlıq verilməyibsə, default başlıq təyin edirik
+            
             if not title:
                 title = f"Yeni Chat - {datetime.now().strftime('%d.%m.%Y %H:%M')}"
             
@@ -110,7 +110,7 @@ class ChatDatabaseManager:
             
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Chat məlumatlarını al
+            # Get Chat info
             cursor.execute("""
                 SELECT chat_id, title, created_at, updated_at 
                 FROM chats 
@@ -122,7 +122,7 @@ class ChatDatabaseManager:
                 conn.close()
                 return None
             
-            # Chat mesajlarını al
+            # Get Chat messages
             cursor.execute("""
                 SELECT 
                     message_id, chat_id, message_text, 
@@ -134,7 +134,7 @@ class ChatDatabaseManager:
             
             messages = cursor.fetchall()
             
-            # Hər mesaj üçün vizualizasiyaları al
+            # Get all visualizations for each message
             chat_data = dict(chat)
             chat_data['messages'] = []
             
@@ -172,7 +172,7 @@ class ChatDatabaseManager:
             
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Növbəti mesaj sırasını hesabla
+           
             cursor.execute("""
                 SELECT COALESCE(MAX(message_order), 0) + 1 as next_order 
                 FROM chat_messages 
@@ -181,7 +181,7 @@ class ChatDatabaseManager:
             
             next_order = cursor.fetchone()['next_order']
             
-            # Mesajı yarat
+            # Mesagge 
             cursor.execute("""
                 INSERT INTO chat_messages (chat_id, message_text, generated_sql, message_order)
                 VALUES (%s, %s, %s, %s)
@@ -190,7 +190,7 @@ class ChatDatabaseManager:
             
             message = cursor.fetchone()
             
-            # Chat-in updated_at-ını yenilə
+            # Chat update 
             cursor.execute("""
                 UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE chat_id = %s
             """, (chat_id,))
@@ -291,7 +291,7 @@ class ChatDatabaseManager:
     
     def generate_title_from_message(self, message_text: str) -> str:
         """Mesajdan avtomatik başlıq yaradır."""
-        # İlk 50 simvolu götürüb başlıq yaradırıq
+        # Select first 8 words from the message
         words = message_text.strip().split()[:8]  # İlk 8 söz
         title = " ".join(words)
         
@@ -311,7 +311,7 @@ class ChatDatabaseManager:
             
             cursor = conn.cursor()
             
-            # Mesajı olmayan chat-ləri tap və sil
+            # Delete chats with no messages
             cursor.execute("""
                 DELETE FROM chats 
                 WHERE chat_id NOT IN (
@@ -341,7 +341,7 @@ class ChatDatabaseManager:
             
             cursor = conn.cursor()
             
-            # "Sorğu işlənir..." və ya "Yeni sorğu..." başlıqlı boş chatləri sil
+            
             cursor.execute("""
                 DELETE FROM chats 
                 WHERE (title LIKE '%işlənir%' OR title LIKE 'Yeni sorğu%')

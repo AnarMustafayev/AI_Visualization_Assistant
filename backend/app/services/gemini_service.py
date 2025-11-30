@@ -58,11 +58,11 @@ def convert_natural_language_to_sql(natural_language_query, db_schema):
         response = model.generate_content(prompt)
         response_text = response.text.strip()
         
-        # JSON-u təmizləyirik
+        
         if "```json" in response_text:
             response_text = response_text.replace("```json", "").replace("```", "")
         
-        # JSON parse etməyə çalışırıq
+        
         try:
             result = json.loads(response_text)
             return {
@@ -72,7 +72,6 @@ def convert_natural_language_to_sql(natural_language_query, db_schema):
                 "reasoning": result.get("reasoning", "")
             }
         except json.JSONDecodeError:
-            # JSON parse edilməzsə, köhnə metodla SQL çıxarırıq
             sql_only = response_text
             if "```sql" in sql_only:
                 sql_only = sql_only.replace("```sql", "").replace("```", "")

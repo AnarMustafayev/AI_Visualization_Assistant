@@ -10,21 +10,18 @@ import EmptyState from './EmptyState';
 export const VisualizationRenderer = ({ results }) => {
   // Handle null/undefined results
   if (!results || !results.data) {
-    console.log('VisualizationRenderer: No results or data provided');
     return <EmptyState results={results} />;
   }
 
   // Handle missing or empty data, or data with an error
   if (results.error || !Array.isArray(results.data) || results.data.length === 0) {
-    console.log('VisualizationRenderer: Empty, invalid data or error:', results);
     return <EmptyState results={results} />;
   }
 
   // Extract visualization type - handle both direct type and nested structure
   const visualizationType = results.type || results.visualization_type || 'table';
   
-  console.log('VisualizationRenderer: Rendering type:', visualizationType);
-  console.log('VisualizationRenderer: Data sample:', results.data[0]);
+
 
   // Transform data based on visualization type
   const transformedResults = transformDataForVisualization(results, visualizationType);
@@ -97,12 +94,7 @@ const transformDataForVisualization = (results, visualizationType) => {
     !numericColumns.includes(col) && !dateColumns.includes(col)
   );
 
-  console.log('Column analysis:', {
-    numeric: numericColumns,
-    date: dateColumns,
-    text: textColumns,
-    total: columns.length
-  });
+
 
   let transformedData = [...data];
   let additionalProps = {};
